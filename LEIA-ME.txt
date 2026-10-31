@@ -1,0 +1,3 @@
+Rádio Auralin
+- index.html: a página do rádio. audio/: músicas e falas do Luan.
+- Para juntar músicas: copiar o .mp3 para audio/ e acrescentar uma linha em SONGS no index.html.

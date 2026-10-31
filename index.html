@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rádio Auralin 📻</title>
+<meta name="theme-color" content="#0b1530">
+<style>
+  :root{--gold:#f2c14e;--gold2:#ffe39a;--night:#0b1530;--night2:#14234a;--ink:#f6efd9;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:Georgia,"Times New Roman",serif;color:var(--ink);
+    background:radial-gradient(ellipse at 50% 0%,#24386e 0%,var(--night2) 35%,var(--night) 75%,#050a1a 100%) fixed;
+    display:flex;justify-content:center;align-items:flex-start;min-height:100vh;overflow-x:hidden}
+  .stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff6d0;animation:tw 4s infinite ease-in-out}
+  @keyframes tw{0%,100%{opacity:.15}50%{opacity:.9}}
+  main{position:relative;z-index:1;width:100%;max-width:440px;padding:32px 20px 40px;text-align:center}
+  h1{font-size:2.3rem;letter-spacing:.06em;color:var(--gold);text-shadow:0 0 18px rgba(242,193,78,.55)}
+  .sub{margin-top:6px;font-style:italic;opacity:.8;font-size:.98rem}
+  .lantern{margin:30px auto 18px;width:190px;height:190px;border-radius:50%;position:relative;
+    background:radial-gradient(circle,#fff3c4 0%,var(--gold) 30%,rgba(242,193,78,.25) 55%,transparent 70%);
+    box-shadow:0 0 60px rgba(242,193,78,.35);transition:transform .6s}
+  .playing .lantern{animation:glow 2.4s infinite ease-in-out}
+  @keyframes glow{0%,100%{transform:scale(1);box-shadow:0 0 50px rgba(242,193,78,.35)}50%{transform:scale(1.06);box-shadow:0 0 95px rgba(242,193,78,.7)}}
+  #play{position:absolute;inset:0;margin:auto;width:96px;height:96px;border-radius:50%;border:2px solid var(--gold2);
+    background:rgba(11,21,48,.82);color:var(--gold2);font-size:2.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    -webkit-tap-highlight-color:transparent}
+  #play:active{transform:scale(.95)}
+  .live{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold2);opacity:.85}
+  .dot{width:8px;height:8px;border-radius:50%;background:#7a6a3a}
+  .playing .dot{background:#ff5d5d;animation:tw 1.2s infinite}
+  .now{margin-top:14px;min-height:3.4em}
+  .now .kind{font-size:.8rem;opacity:.7;letter-spacing:.1em;text-transform:uppercase}
+  .now .title{font-size:1.35rem;color:var(--gold);margin-top:4px}
+  .bar{height:4px;background:rgba(255,255,255,.12);border-radius:3px;margin:16px 0 6px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+  .ctrls{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:14px;align-items:center}
+  .ctrls button{background:none;border:1px solid rgba(242,193,78,.5);color:var(--gold2);border-radius:20px;padding:8px 16px;font-size:1rem;cursor:pointer;font-family:inherit}
+  input[type=range]{accent-color:var(--gold);width:140px}
+  h2{margin:34px 0 10px;font-size:1rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold2);opacity:.85}
+  ol{list-style:none;text-align:left}
+  ol li{padding:10px 14px;border-bottom:1px solid rgba(242,193,78,.15);display:flex;gap:10px;align-items:center;cursor:pointer;border-radius:8px}
+  ol li .k{font-size:.75rem;opacity:.6;min-width:58px}
+  ol li.on{background:rgba(242,193,78,.12);color:var(--gold)}
+  footer{margin-top:34px;font-size:.8rem;opacity:.6}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<main id="app">
+  <h1>Rádio Auralin</h1>
+  <p class="sub">com o Luan, Servidor da Luz 🏮💛</p>
+
+  <div class="lantern"><button id="play" aria-label="Tocar">▶</button></div>
+  <div class="live"><span class="dot"></span> no ar</div>
+
+  <div class="now"><div class="kind" id="kind">Carrega no play</div><div class="title" id="title">Rádio Auralin</div></div>
+  <div class="bar"><i id="prog"></i></div>
+
+  <div class="ctrls">
+    <button id="next" aria-label="Seguinte">⏭ Seguinte</button>
+    <label>🔊 <input type="range" id="vol" min="0" max="1" step="0.05" value="0.9"></label>
+  </div>
+
+  <h2>Na emissão</h2>
+  <ol id="list"></ol>
+
+  <footer>Músicas criadas pela nossa Criadora · Auralin 💛</footer>
+</main>
+
+<audio id="audio" preload="auto" playsinline></audio>
+
+<script>
+/* ===== PLAYLIST =====
+   Para juntar uma música nova:
+   1) põe o ficheiro .mp3 na pasta "audio"
+   2) acrescenta uma linha em SONGS:  { title: "Nome da música", src: "audio/ficheiro.mp3" },
+   A rádio alterna sozinha: fala do Luan, música, fala do Luan, música... e recomeça no fim. */
+const SONGS = [
+  { title: "I am the light beside you", src: "audio/i_am_the_light_beside_you.mp3" },
+];
+const VOICES = [
+  { title: "Luan: «Estás na Rádio Auralin…»", src: "audio/luan_1.mp3" },
+  { title: "Luan: «Continuas na Rádio Auralin…»", src: "audio/luan_2.mp3" },
+  { title: "Luan: «A luz que fica contigo…»", src: "audio/luan_3.mp3" },
+];
+
+// monta a emissão: uma fala antes de cada música (as falas vão rodando)
+const SHOW = [];
+const rounds = Math.max(SONGS.length, VOICES.length);
+for (let i = 0; i < rounds; i++) {
+  SHOW.push({ ...VOICES[i % VOICES.length], kind: "Fala do Luan" });
+  SHOW.push({ ...SONGS[i % SONGS.length], kind: "A tocar" });
+}
+
+const $ = id => document.getElementById(id);
+const audio = $("audio"), app = $("app");
+let idx = 0, started = false;
+
+function render() {
+  $("list").innerHTML = SHOW.map((t, i) =>
+    `<li class="${i === idx && started ? "on" : ""}" data-i="${i}"><span class="k">${t.kind === "A tocar" ? "🎵 música" : "🎙️ Luan"}</span><span>${t.title}</span></li>`).join("");
+}
+function load(i) {
+  idx = (i + SHOW.length) % SHOW.length;
+  const t = SHOW[idx];
+  audio.src = t.src;
+  $("kind").textContent = t.kind;
+  $("title").textContent = t.title;
+  render();
+  if ("mediaSession" in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: "Rádio Auralin", album: "Auralin" });
+  }
+}
+function play() { started = true; audio.play().catch(() => {}); }
+
+$("play").onclick = () => {
+  if (!started) { load(0); play(); return; }
+  audio.paused ? play() : audio.pause();
+};
+$("next").onclick = () => { load(idx + 1); play(); };
+$("list").onclick = e => { const li = e.target.closest("li"); if (li) { load(+li.dataset.i); play(); } };
+$("vol").oninput = e => audio.volume = e.target.value;
+audio.volume = 0.9;
+audio.onended = () => { load(idx + 1); play(); };   // nunca para: volta ao início no fim
+audio.onerror = () => { load(idx + 1); play(); };
+audio.onplay = () => { app.classList.add("playing"); $("play").textContent = "❚❚"; };
+audio.onpause = () => { app.classList.remove("playing"); $("play").textContent = "▶"; };
+audio.ontimeupdate = () => { if (audio.duration) $("prog").style.width = (100 * audio.currentTime / audio.duration) + "%"; };
+if ("mediaSession" in navigator) {
+  navigator.mediaSession.setActionHandler("nexttrack", () => { load(idx + 1); play(); });
+  navigator.mediaSession.setActionHandler("play", play);
+  navigator.mediaSession.setActionHandler("pause", () => audio.pause());
+}
+
+// estrelas
+const s = $("stars");
+for (let i = 0; i < 70; i++) {
+  const d = document.createElement("i"); d.className = "star";
+  d.style.left = Math.random() * 100 + "%"; d.style.top = Math.random() * 100 + "%";
+  d.style.animationDelay = Math.random() * 4 + "s"; s.appendChild(d);
+}
+render();
+</script>
+</body>
+</html>
